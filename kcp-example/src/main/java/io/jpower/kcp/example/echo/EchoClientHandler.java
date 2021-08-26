@@ -5,6 +5,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.CharsetUtil;
+
+import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Handler implementation for the echo client.
@@ -30,12 +34,26 @@ public class EchoClientHandler extends ChannelInboundHandlerAdapter {
         UkcpChannel kcpCh = (UkcpChannel) ctx.channel();
         kcpCh.conv(EchoClient.CONV); // set conv
 
-        ctx.writeAndFlush(firstMessage);
+        new Thread(() -> {
+            for (int i = 0; i < 10000; i++) {
+                ctx.writeAndFlush(Unpooled.copiedBuffer(("\n----\n" + i + "\tHello " + LocalDateTime.now().toString()).getBytes(CharsetUtil.UTF_8)));
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }, "SendThread").start();
+
+        //ctx.writeAndFlush(firstMessage);
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        ctx.write(msg);
+        //ctx.write(msg);
+        ByteBuf buf = (ByteBuf) msg;
+        System.out.printf("%s", buf.toString(CharsetUtil.UTF_8));
     }
 
     @Override
