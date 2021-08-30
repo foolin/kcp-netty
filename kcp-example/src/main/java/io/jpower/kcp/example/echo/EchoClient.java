@@ -5,11 +5,15 @@ import io.jpower.kcp.netty.UkcpChannel;
 import io.jpower.kcp.netty.UkcpChannelOption;
 import io.jpower.kcp.netty.UkcpClientChannel;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.CharsetUtil;
+
+import java.time.LocalDateTime;
 
 /**
  * Sends one message when a connection is open and echoes back any received
@@ -43,6 +47,7 @@ public final class EchoClient {
 
             // Start the client.
             ChannelFuture f = b.connect(HOST, PORT).sync();
+            run((UkcpClientChannel) f.channel());
 
             // Wait until the connection is closed.
             f.channel().closeFuture().sync();
@@ -50,6 +55,28 @@ public final class EchoClient {
             // Shut down the event loop to terminate all threads.
             group.shutdownGracefully();
         }
+    }
+
+    public static void run(UkcpClientChannel ukcpClientChannel){
+        new Thread(() -> {
+            for (int i = 0; i < 10000; i++) {
+                if(!ukcpClientChannel.isActive()){
+                    System.err.println("Server has closed! " + LocalDateTime.now());
+                    break;
+                }
+//                if(i > 6){
+//                    ukcpClientChannel.close();
+//                }
+                ukcpClientChannel.writeAndFlush(Unpooled.copiedBuffer(("NO." + i + "\tHello " + LocalDateTime.now() + "\n").getBytes(CharsetUtil.UTF_8)));
+                System.out.println("send " + i + " done:" + LocalDateTime.now());
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }, "SendThread").start();
     }
 
 }

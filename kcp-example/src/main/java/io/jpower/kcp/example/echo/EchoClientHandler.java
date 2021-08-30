@@ -34,18 +34,6 @@ public class EchoClientHandler extends ChannelInboundHandlerAdapter {
         UkcpChannel kcpCh = (UkcpChannel) ctx.channel();
         kcpCh.conv(EchoClient.CONV); // set conv
 
-        new Thread(() -> {
-            for (int i = 0; i < 10000; i++) {
-                ctx.writeAndFlush(Unpooled.copiedBuffer(("\n----\n" + i + "\tHello " + LocalDateTime.now().toString()).getBytes(CharsetUtil.UTF_8)));
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-        }, "SendThread").start();
-
         //ctx.writeAndFlush(firstMessage);
     }
 

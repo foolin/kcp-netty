@@ -277,7 +277,7 @@ public final class UkcpClientChannel extends AbstractChannel implements UkcpChan
 
     void scheduleUpdate(int tsUpdate, int current) {
         if (sheduleUpdateLog.isDebugEnabled()) {
-            sheduleUpdateLog.debug("schedule delay: " + (tsUpdate - current));
+            //sheduleUpdateLog.debug("schedule delay: " + (tsUpdate - current));
         }
         this.tsUpdate = tsUpdate;
         eventLoop().schedule(this, tsUpdate - current, TimeUnit.MILLISECONDS);

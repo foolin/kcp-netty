@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.spi.SelectorProvider;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -98,6 +99,7 @@ public final class UkcpServerChannel extends AbstractNioMessageChannel implement
     public UkcpServerChannel(DatagramChannel socket) {
         super(null, socket, SelectionKey.OP_READ);
         config = new DefaultUkcpServerChannelConfig(this, socket.socket());
+        System.err.println("UkcpServerChannel new config:" +config.hashCode());
     }
 
     @Override
@@ -324,7 +326,7 @@ public final class UkcpServerChannel extends AbstractNioMessageChannel implement
 
     private void scheduleUpdate(int tsUpdate, int current) {
         if (sheduleUpdateLog.isDebugEnabled()) {
-            sheduleUpdateLog.debug("schedule delay: " + (tsUpdate - current));
+            //sheduleUpdateLog.debug("schedule delay: " + (tsUpdate - current));
         }
         this.tsUpdate = tsUpdate;
         eventLoop().schedule(this, tsUpdate - current, TimeUnit.MILLISECONDS);
@@ -503,6 +505,8 @@ public final class UkcpServerChannel extends AbstractNioMessageChannel implement
             final ChannelPipeline pipeline = pipeline();
             final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
             allocHandle.reset(config);
+
+            System.out.println("UkcpServerUnsafe.read() " + LocalDateTime.now());
 
             boolean closed = false;
             Throwable exception = null;

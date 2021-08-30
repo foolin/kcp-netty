@@ -1,5 +1,6 @@
 package io.jpower.kcp.netty;
 
+import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -199,6 +200,8 @@ public class Kcp {
      * automatically set conv
      */
     private boolean autoSetConv;
+
+    private boolean firstStart = true;
 
     private KcpMetric metric = new KcpMetric(this);
 
@@ -659,9 +662,9 @@ public class Kcp {
 
     private void parseData(Segment newSeg) {
         long sn = newSeg.sn;
-
         if (itimediff(sn, rcvNxt + rcvWnd) >= 0 || itimediff(sn, rcvNxt) < 0) {
             newSeg.recycle(true);
+            System.err.printf("newSeg.recycle sn:%d, rcvNxt:%d\n", sn, rcvNxt);
             return;
         }
 
@@ -705,7 +708,11 @@ public class Kcp {
                 itr.remove();
                 rcvQueue.add(seg);
                 rcvNxt++;
+                System.err.printf("moveRcvData  add queue, sn:%d, rcvNxt:%d, rcvQueue.size()=%d, rcvWnd:%d\n"
+                        , seg.sn, rcvNxt, rcvQueue.size(), rcvWnd);
             } else {
+                System.err.printf("moveRcvData do nothing, sn:%d, rcvNxt:%d, rcvQueue.size()=%d, rcvWnd:%d\n"
+                        , seg.sn, rcvNxt, rcvQueue.size(), rcvWnd);
                 break;
             }
         }
@@ -747,6 +754,20 @@ public class Kcp {
             sn = data.readUnsignedIntLE();
             una = data.readUnsignedIntLE();
             len = data.readIntLE();
+
+            log.info("{} input cmd: {}, frg:{}, wnd:{}, ts:{}, sn:{}, una:{}, len:{}\n",
+                    LocalDateTime.now(), cmd, frg, wnd, ts, sn, una, len);
+
+            //重启了
+            if(sn > 0 && rcvNxt == 0 && firstStart){
+                rcvNxt = sn;
+                log.info("[RESET] rcvNxt={}, sn={}", rcvNxt, sn);
+            }
+            log.info("[RIX] rcvNxt={}, sn={}", rcvNxt, sn);
+            if(firstStart) {
+                firstStart = false;
+                log.info("[RIX] Set firstStart rcvNxt={}, sn={}", rcvNxt, sn);
+            }
 
             if (data.readableBytes() < len || len < 0) {
                 return -2;
@@ -902,7 +923,9 @@ public class Kcp {
             buffer = tryCreateOrOutput(buffer, IKCP_OVERHEAD);
             seg.sn = int2Uint(acklist[i * 2]);
             seg.ts = acklist[i * 2 + 1];
-            encodeSeg(buffer, seg);
+            int len = encodeSeg(buffer, seg);
+            log.info("{} output cmd:{}, frg:{}, wnd:{}, ts:{}, sn:{}, una:{}, len:{}\n",
+                    LocalDateTime.now(), seg.cmd, seg.frg, seg.wnd, seg.ts, seg.sn, seg.una, len);
             if (log.isDebugEnabled()) {
                 log.debug("{} flush ack: sn={}, ts={}", this, seg.sn, seg.ts);
             }
@@ -1026,7 +1049,7 @@ public class Kcp {
                     if (log.isDebugEnabled()) {
                         log.debug("{} fastresend. sn={}, xmit={}, resendts={} ", this, segment.sn, segment.xmit,
                                 (segment
-                                .resendts - current));
+                                        .resendts - current));
                     }
                 }
             }

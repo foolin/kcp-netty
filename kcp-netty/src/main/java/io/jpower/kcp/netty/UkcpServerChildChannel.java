@@ -43,6 +43,7 @@ public final class UkcpServerChildChannel extends AbstractChannel implements Ukc
         ukcp.channel(this);
         this.ukcp = ukcp;
         this.remoteAddress = remoteAddress;
+        System.err.println("UkcpServerChildChannel new Instance, parent:" + parent.hashCode() + ", ukcp:" + ukcp.hashCode());
     }
 
     @Override
@@ -108,6 +109,7 @@ public final class UkcpServerChildChannel extends AbstractChannel implements Ukc
     @Override
     protected void doClose() throws Exception {
         parent().doCloseChildChannel(this); // callback parent
+        System.err.println(this.getClass().getName() + " doClose parent().doCloseChildChannel(this)");
     }
 
     @Override

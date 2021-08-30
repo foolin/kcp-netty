@@ -1,15 +1,16 @@
 package io.jpower.kcp.example.echo;
 
-import io.jpower.kcp.netty.ChannelOptionHelper;
-import io.jpower.kcp.netty.UkcpChannel;
-import io.jpower.kcp.netty.UkcpChannelOption;
-import io.jpower.kcp.netty.UkcpServerChannel;
+import io.jpower.kcp.netty.*;
 import io.netty.bootstrap.UkcpServerBootstrap;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.CharsetUtil;
+
+import java.time.LocalDateTime;
 
 /**
  * Echoes back any received data from a client.
@@ -35,7 +36,7 @@ public final class EchoServer {
                             p.addLast(new EchoServerHandler());
                         }
                     });
-            ChannelOptionHelper.nodelay(b, true, 20, 2, true)
+            ChannelOptionHelper.nodelay(b, true, 5, 2, true)
                     .childOption(UkcpChannelOption.UKCP_MTU, 512);
 
             // Start the server.
